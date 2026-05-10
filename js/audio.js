@@ -106,6 +106,38 @@ export const Audio = {
     });
   },
 
+  bossHurt() {
+    play((ac) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(700, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(160, ac.currentTime + 0.22);
+      gain.gain.setValueAtTime(0.28, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.25);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.25);
+    });
+  },
+
+  bossDefeat() {
+    play((ac) => {
+      [330, 392, 523, 659, 784, 1047].forEach((freq, i) => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        const t = ac.currentTime + i * 0.1;
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.start(t);
+        osc.stop(t + 0.35);
+      });
+    });
+  },
+
   win() {
     play((ac) => {
       const notes = [523, 659, 784, 1047];

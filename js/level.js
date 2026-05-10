@@ -1,6 +1,7 @@
 import { Platform }    from './platform.js';
 import { Enemy }       from './enemy.js';
 import { Collectible } from './collectible.js';
+// Boss is created in game.js via levelDef.bossStart
 
 // Enemy(x, y, patrolW, speed)  ← speed 預設 80，第三關用 130~160 加速版
 
@@ -302,7 +303,6 @@ export const LEVEL_3 = {
 
   goal: { x: 4240, y: 140, w: 40, h: 40 },
 
-  // 電路裝飾節點（格式：[x, y, 類型 'h'水平/'v'垂直]）
   circuits: [
     [100,200,'h'],[300,350,'v'],[500,150,'h'],[700,280,'v'],
     [1000,400,'h'],[1200,250,'v'],[1500,500,'h'],[1700,300,'v'],
@@ -310,4 +310,279 @@ export const LEVEL_3 = {
     [2800,200,'h'],[3000,350,'v'],[3200,480,'h'],[3400,280,'v'],
     [3700,420,'h'],[3900,260,'v'],[4100,380,'h'],[4300,220,'v'],
   ],
+};
+
+// ── 關卡 4：亞馬遜森林 ────────────────────────────────────────
+// 設計主軸：茂密叢林 + 藤蔓視差 + 螢火蟲
+//   段落 A（森林入口，熱身高低台）→ 段落 B（雨林深處，敵人密集）→
+//   段落 C（叢林裂谷，窄跳石渡河）→ 段落 D（古老神殿，垂直攀升）→
+//   段落 E（樹頂最終衝刺）→ 終點
+export const LEVEL_4 = {
+  width: 4200,
+  height: 900,
+  playerStart: { x: 80, y: 740 },
+  bg: ['#0d2e00', '#061800'],
+  bgType: 'jungle',
+
+  platforms: [
+    // ── A. 森林入口（熱身）──────────────────────────
+    new Platform(0,    820, 1100, 80, '#3d1a08'),
+    new Platform(150,  700, 180,  18, '#6b3a1a'),
+    new Platform(400,  590, 180,  18, '#1a6020'),
+    new Platform(630,  480, 180,  18, '#6b3a1a'),
+    new Platform(860,  370, 180,  18, '#1a6020'),
+    new Platform(1020, 680, 140,  18, '#6b3a1a'),
+
+    // ── B. 雨林深處（敵人密集）──────────────────────
+    new Platform(1100, 820, 700,  80, '#3d1a08'),
+    new Platform(1160, 680, 200,  18, '#1a6020'),
+    new Platform(1440, 560, 180,  18, '#6b3a1a'),
+    new Platform(1700, 440, 200,  18, '#1a6020'),
+    new Platform(1560, 680, 160,  18, '#6b3a1a'),
+    new Platform(1900, 680, 180,  18, '#1a6020'),
+    new Platform(2100, 560, 160,  18, '#6b3a1a'),
+    new Platform(2300, 440, 200,  18, '#1a6020'),
+
+    // ── C. 叢林裂谷（窄跳石）────────────────────────
+    new Platform(2560, 750,  80,  18, '#5a3010'),
+    new Platform(2690, 670,  70,  18, '#5a3010'),
+    new Platform(2810, 600,  80,  18, '#5a3010'),
+    new Platform(2930, 670,  70,  18, '#5a3010'),
+    new Platform(3050, 750,  80,  18, '#5a3010'),
+
+    // ── D. 古老神殿（垂直攀升）──────────────────────
+    new Platform(3120, 820, 280,  80, '#3d1a08'),
+    new Platform(3160, 680, 130,  18, '#8b5a20'),
+    new Platform(3320, 560, 130,  18, '#8b5a20'),
+    new Platform(3170, 440, 130,  18, '#8b5a20'),
+    new Platform(3330, 320, 130,  18, '#8b5a20'),
+    new Platform(3180, 200, 130,  18, '#8b5a20'),
+
+    // ── E. 樹頂衝刺（最終密集）──────────────────────
+    new Platform(3700, 820, 500,  80, '#3d1a08'),
+    new Platform(3750, 680, 200,  18, '#1a6020'),
+    new Platform(3980, 560, 200,  18, '#6b3a1a'),
+    new Platform(3800, 440, 200,  18, '#1a6020'),
+    new Platform(4000, 310, 200,  18, '#6b3a1a'),
+    new Platform(3890, 180, 220,  20, '#c0a000'),  // 黃金終點台
+  ],
+
+  enemies: [
+    // A段
+    new Enemy(420,  554, 140, 90),
+    new Enemy(650,  444, 140, 95),
+    new Enemy(880,  334, 140, 95),
+    // B段
+    new Enemy(1180, 644, 170, 100),
+    new Enemy(1460, 524, 150, 105),
+    new Enemy(1720, 404, 170, 110),
+    new Enemy(1920, 644, 150, 110),
+    new Enemy(2120, 524, 130, 115),
+    new Enemy(2320, 404, 160, 120),
+    // C段跳石
+    new Enemy(2565, 714,  55, 110),
+    new Enemy(2815, 564,  55, 115),
+    // D段
+    new Enemy(3170, 644, 110, 115),
+    new Enemy(3330, 524, 110, 120),
+    new Enemy(3340, 284, 110, 120),
+    // E段
+    new Enemy(3770, 644, 170, 120),
+    new Enemy(3990, 524, 170, 125),
+    new Enemy(3820, 404, 170, 125),
+    new Enemy(4010, 274, 170, 130),
+  ],
+
+  collectibles: [
+    // A段
+    new Collectible(190,  668, 'bolt'),
+    new Collectible(440,  558, 'coin'),
+    new Collectible(670,  448, 'bolt'),
+    new Collectible(900,  338, 'coin'),
+    // B段
+    new Collectible(1200, 648, 'bolt'),
+    new Collectible(1480, 528, 'coin'),
+    new Collectible(1740, 408, 'bolt'),
+    new Collectible(1940, 648, 'coin'),
+    new Collectible(2140, 528, 'bolt'),
+    new Collectible(2340, 408, 'coin'),
+    // C段跳石
+    new Collectible(2575, 718, 'bolt'),
+    new Collectible(2700, 638, 'coin'),
+    new Collectible(2825, 568, 'bolt'),
+    // D段
+    new Collectible(3180, 648, 'bolt'),
+    new Collectible(3340, 528, 'coin'),
+    new Collectible(3190, 408, 'bolt'),
+    new Collectible(3350, 288, 'coin'),
+    new Collectible(3200, 168, 'bolt'),
+    // E段
+    new Collectible(3800, 648, 'coin'),
+    new Collectible(4020, 528, 'bolt'),
+    new Collectible(3840, 408, 'coin'),
+    new Collectible(4040, 278, 'bolt'),
+    new Collectible(3930, 148, 'coin'),
+  ],
+
+  goal: { x: 3980, y: 140, w: 40, h: 40 },
+
+  // 藤蔓裝飾（從天花板垂下），格式：[x, 長度]
+  vines: [
+    [80,70],[200,100],[380,80],[520,110],[680,90],
+    [900,120],[1080,70],[1250,100],[1450,80],[1650,110],
+    [1850,90],[2050,120],[2250,80],[2450,100],[2650,70],
+    [2850,110],[3100,90],[3300,80],[3500,120],[3700,70],
+    [3900,100],[4100,90],
+  ],
+};
+
+// ── 關卡 5：太空軌道 ────────────────────────────────────────
+// 設計主軸：太空站平台 + 小行星帶跳石 + 高速敵人（子彈為主）
+//   段落 A（太空站入口，寬平台熱身）→ 段落 B（小行星帶，窄跳石）→
+//   段落 C（核心艙，之字攀升）→ 段落 D（深空高速區，最快敵人）→
+//   段落 E（軌道頂層，最終密集戰）→ 終點
+export const LEVEL_5 = {
+  width: 4800,
+  height: 900,
+  playerStart: { x: 80, y: 740 },
+  bg: ['#000010', '#000005'],
+  bgType: 'space',
+
+  platforms: [
+    // ── A. 太空站入口（寬闊）────────────────────────
+    new Platform(0,    820, 1200, 80, '#1a1a3a'),
+    new Platform(160,  680, 200,  18, '#2a2a5a'),
+    new Platform(440,  560, 200,  18, '#3a2060'),
+    new Platform(700,  440, 200,  18, '#2a2a5a'),
+    new Platform(960,  320, 200,  18, '#3a2060'),
+
+    // ── B. 小行星帶（窄跳石）────────────────────────
+    new Platform(1230, 760,  75,  18, '#4a3520'),
+    new Platform(1360, 690,  65,  18, '#4a3520'),
+    new Platform(1480, 620,  70,  18, '#4a3520'),
+    new Platform(1600, 690,  65,  18, '#4a3520'),
+    new Platform(1720, 760,  75,  18, '#4a3520'),
+    new Platform(1850, 820, 300,  80, '#1a1a3a'),
+
+    // ── C. 核心艙（之字攀升）────────────────────────
+    new Platform(2180, 820, 600,  80, '#1a1a3a'),
+    new Platform(2220, 680, 180,  18, '#2a2a5a'),
+    new Platform(2460, 560, 180,  18, '#3a2060'),
+    new Platform(2230, 440, 180,  18, '#2a2a5a'),
+    new Platform(2460, 320, 180,  18, '#3a2060'),
+    new Platform(2240, 200, 200,  18, '#2a2a5a'),
+
+    // ── D. 深空高速區（最快）────────────────────────
+    new Platform(2820, 820, 700,  80, '#1a1a3a'),
+    new Platform(2870, 680, 180,  18, '#3a2060'),
+    new Platform(3120, 560, 160,  18, '#2a2a5a'),
+    new Platform(3340, 440, 160,  18, '#3a2060'),
+    new Platform(3120, 320, 160,  18, '#2a2a5a'),
+    new Platform(3340, 200, 180,  18, '#3a2060'),
+
+    // ── E. 軌道頂層（最終衝刺）──────────────────────
+    new Platform(3560, 820, 500,  80, '#1a1a3a'),
+    new Platform(3610, 680, 200,  18, '#2a2a5a'),
+    new Platform(3860, 560, 200,  18, '#3a2060'),
+    new Platform(3660, 440, 200,  18, '#2a2a5a'),
+    new Platform(3880, 320, 200,  18, '#3a2060'),
+    new Platform(3700, 200, 160,  18, '#2a2a5a'),
+    new Platform(4100, 820, 700,  80, '#1a1a3a'),
+    new Platform(4150, 680, 200,  18, '#3a2060'),
+    new Platform(4380, 560, 200,  18, '#2a2a5a'),
+    new Platform(4200, 440, 200,  18, '#3a2060'),
+    new Platform(4380, 320, 180,  18, '#2a2a5a'),
+    new Platform(4240, 180, 240,  20, '#c0a000'),  // 黃金終點台
+  ],
+
+  enemies: [
+    // A段（110-125）
+    new Enemy(460,  524, 160, 110),
+    new Enemy(720,  404, 160, 115),
+    new Enemy(980,  284, 160, 120),
+    // B段（跳石）
+    new Enemy(1235, 724,  50, 125),
+    new Enemy(1485, 584,  50, 125),
+    new Enemy(1725, 724,  50, 130),
+    // C段（130-140）
+    new Enemy(2230, 644, 150, 130),
+    new Enemy(2470, 524, 150, 135),
+    new Enemy(2240, 404, 150, 135),
+    new Enemy(2470, 284, 150, 140),
+    // D段（140-155）
+    new Enemy(2880, 644, 150, 140),
+    new Enemy(3130, 524, 130, 145),
+    new Enemy(3350, 404, 130, 150),
+    new Enemy(3130, 284, 130, 150),
+    new Enemy(3350, 164, 150, 155),
+    // E段（150-165）
+    new Enemy(3620, 644, 170, 150),
+    new Enemy(3870, 524, 170, 155),
+    new Enemy(3660, 404, 170, 155),
+    new Enemy(4160, 644, 170, 158),
+    new Enemy(4390, 524, 170, 160),
+    new Enemy(4210, 404, 170, 162),
+    new Enemy(4390, 284, 170, 165),
+  ],
+
+  collectibles: [
+    // A段
+    new Collectible(200,  648, 'bolt'),
+    new Collectible(480,  528, 'coin'),
+    new Collectible(740,  408, 'bolt'),
+    new Collectible(1000, 288, 'coin'),
+    // B段
+    new Collectible(1240, 728, 'bolt'),
+    new Collectible(1370, 658, 'coin'),
+    new Collectible(1490, 588, 'bolt'),
+    new Collectible(1610, 658, 'coin'),
+    new Collectible(1730, 728, 'bolt'),
+    // C段
+    new Collectible(2240, 648, 'bolt'),
+    new Collectible(2480, 528, 'coin'),
+    new Collectible(2250, 408, 'bolt'),
+    new Collectible(2480, 288, 'coin'),
+    new Collectible(2260, 168, 'bolt'),
+    // D段
+    new Collectible(2890, 648, 'coin'),
+    new Collectible(3140, 528, 'bolt'),
+    new Collectible(3360, 408, 'coin'),
+    new Collectible(3140, 288, 'bolt'),
+    new Collectible(3360, 168, 'coin'),
+    // E段
+    new Collectible(3640, 648, 'bolt'),
+    new Collectible(3880, 528, 'coin'),
+    new Collectible(3680, 408, 'bolt'),
+    new Collectible(4170, 648, 'coin'),
+    new Collectible(4400, 528, 'bolt'),
+    new Collectible(4220, 408, 'coin'),
+    new Collectible(4400, 288, 'bolt'),
+    new Collectible(4280, 148, 'bolt'),
+  ],
+
+  goal: { x: 4380, y: 140, w: 40, h: 40 },
+};
+
+// ── BOSS 關：最終決戰場 ────────────────────────────────────────
+export const LEVEL_BOSS = {
+  width: 1600,
+  height: 900,
+  playerStart: { x: 80, y: 740 },
+  bg: ['#1a0033', '#080015'],
+  bgType: 'boss',
+  bossStart: { x: 555, y: 250 },  // Boss 左上角座標（90x90）；y=250 讓玩家從高台可以射擊到
+
+  platforms: [
+    new Platform(0,    820, 1600, 80, '#2a1050'),  // 地板
+    new Platform(150,  670, 200,  18, '#3a1870'),  // 左低台
+    new Platform(700,  670, 200,  18, '#3a1870'),  // 中低台
+    new Platform(1250, 670, 200,  18, '#3a1870'),  // 右低台
+    new Platform(380,  520, 220,  18, '#4a2090'),  // 左中台
+    new Platform(1000, 520, 220,  18, '#4a2090'),  // 右中台
+    new Platform(560,  360, 480,  18, '#5a30b0'),  // 高台（正對 BOSS 下方，可跳踩）
+  ],
+
+  enemies: [],
+  collectibles: [],
+  goal: null,  // 勝利條件改為 Boss 死亡
 };
