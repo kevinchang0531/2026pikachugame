@@ -27,6 +27,8 @@ export class Game {
     this._winTimer = 0;
     this._time   = 0;
     this.boss    = null;
+    this._selectedOption = 0; // 選單游標：0=新遊戲, 1=繼續
+    this._scoreAdded     = false;
   }
 
   _load(levelDef) {
@@ -48,19 +50,54 @@ export class Game {
     BGM.play(this._levelIdx);
   }
 
-  _startGame() {
+  // ── localStorage 存檔 ────────────────────────────────────────
+  _hasSave()      { return !!localStorage.getItem('pikachuSave'); }
+  _clearSave()    { localStorage.removeItem('pikachuSave'); }
+  _saveProgress() {
+    localStorage.setItem('pikachuSave', JSON.stringify({
+      levelIdx: this._levelIdx, lives: this.lives, score: this.score,
+    }));
+  }
+  _continueGame() {
+    const d = JSON.parse(localStorage.getItem('pikachuSave'));
+    this.lives = d.lives; this.score = d.score; this._levelIdx = d.levelIdx;
+    this._scoreAdded = false;
+    this._load(LEVELS[this._levelIdx]);
+    this._state = 'playing'; this._menuKeyHeld = true;
+  }
+
+  // ── 高分榜 ───────────────────────────────────────────────────
+  _getHighScores() {
+    try { return JSON.parse(localStorage.getItem('pikachuScores') || '[]'); }
+    catch { return []; }
+  }
+  _addHighScore(score) {
+    const raw  = prompt('🏆 恭喜通關！輸入你的名字（最多 8 字）', '皮卡丘');
+    const name = (raw || '皮卡丘').trim().slice(0, 8) || '皮卡丘';
+    const list = this._getHighScores();
+    list.push({ name, score, date: new Date().toLocaleDateString('zh-TW') });
+    list.sort((a, b) => b.score - a.score);
+    localStorage.setItem('pikachuScores', JSON.stringify(list.slice(0, 5)));
+  }
+
+  // ── 開始新遊戲（可指定起始關）───────────────────────────────
+  _startGame(levelIdx = 0) {
     this.lives = 3;
     this.score = 0;
-    this._levelIdx = 0;
-    this._load(LEVELS[0]);
+    this._levelIdx = levelIdx;
+    this._selectedOption = 0;
+    this._scoreAdded = false;
+    this._clearSave();
+    this._load(LEVELS[levelIdx]);
     this._state = 'playing';
-    this._menuKeyHeld = true; // 防止剛開始就因按鍵殘留而觸發其他動作
+    this._menuKeyHeld = true;
   }
 
   _loseLife() {
     if (this._state !== 'playing') return;
     this.lives--;
     if (this.lives <= 0) {
+      this._clearSave();
       this._state = 'gameover';
       BGM.stop();
       Audio.hurt();
@@ -84,15 +121,36 @@ export class Game {
   }
 
   update(dt) {
-    const anyKey = Object.values(this.input.keys).some(Boolean);
+    const keys   = this.input.keys;
+    const anyKey = Object.values(keys).some(Boolean);
+
+    if (this._state === 'menu') {
+      const hasSave  = this._hasSave();
+      const maxOpt   = hasSave ? 1 : 0;
+      if (!this._menuKeyHeld) {
+        // 數字鍵跳關
+        for (let i = 1; i <= 6; i++) {
+          if (keys[`Digit${i}`]) { this._startGame(i - 1); return; }
+        }
+        // 選單游標
+        if (keys['ArrowUp'])   this._selectedOption = Math.max(0, this._selectedOption - 1);
+        if (keys['ArrowDown']) this._selectedOption = Math.min(maxOpt, this._selectedOption + 1);
+        // 確認
+        if (keys['Enter'] || keys['Space'] || keys['KeyZ']) {
+          if (this._selectedOption === 1 && hasSave) this._continueGame();
+          else this._startGame();
+          return;
+        }
+      }
+      if (!hasSave) this._selectedOption = 0;
+      this._menuKeyHeld = anyKey;
+      return;
+    }
 
     if (this._state !== 'playing') {
       if (!this._menuKeyHeld && anyKey) {
-        if (this._state === 'clear') {
-          this._state = 'menu';
-        } else {
-          this._startGame(); // menu / gameover → 開始/重試
-        }
+        if (this._state === 'clear') this._state = 'menu';
+        else this._startGame();
       }
       this._menuKeyHeld = anyKey;
       return;
@@ -111,10 +169,16 @@ export class Game {
         const nextIdx = this._levelIdx + 1;
         if (nextIdx >= LEVELS.length) {
           this._state = 'clear';
+          this._clearSave();
           BGM.stop();
+          if (!this._scoreAdded) {
+            this._scoreAdded = true;
+            this._addHighScore(this.score);
+          }
         } else {
           this._levelIdx = nextIdx;
           this._load(LEVELS[this._levelIdx]);
+          this._saveProgress();
         }
       }
       return;
@@ -643,19 +707,56 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.fillText('2026', canvas.width / 2, 378);
 
-    // 閃爍提示
-    if (Math.sin(t / 420) > 0) {
-      ctx.fillStyle = '#ffffff';
-      ctx.font      = 'bold 26px monospace';
-      ctx.fillText('按任意鍵開始', canvas.width / 2, 510);
+    // ── 選單選項 ──
+    const hasSave = this._hasSave();
+    const options = ['▶  NEW GAME'];
+    if (hasSave) {
+      const sv = JSON.parse(localStorage.getItem('pikachuSave'));
+      const isBossLv = sv.levelIdx === LEVELS.length - 1;
+      options.push(`▶  繼續 (${isBossLv ? 'BOSS 關' : '第 ' + (sv.levelIdx + 1) + ' 關'}  ♥${sv.lives}  ${sv.score}pt)`);
+    }
+    options.forEach((label, i) => {
+      const isSelected = i === this._selectedOption;
+      ctx.font      = `bold 26px monospace`;
+      ctx.fillStyle = isSelected ? '#ffcb05' : 'rgba(255,255,255,0.45)';
+      if (isSelected) {
+        ctx.save();
+        ctx.shadowColor = '#ffcb05'; ctx.shadowBlur = 14;
+        ctx.fillText(label, canvas.width / 2, 468 + i * 54);
+        ctx.restore();
+      } else {
+        ctx.fillText(label, canvas.width / 2, 468 + i * 54);
+      }
+    });
+
+    // 操作提示
+    ctx.font      = '14px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.fillText('↑↓ 選擇　Enter / Z 確認', canvas.width / 2, 600);
+    ctx.fillStyle = 'rgba(255,203,5,0.55)';
+    ctx.fillText('數字鍵 1~6 直接跳關（1~5 普通關  6=BOSS）', canvas.width / 2, 624);
+
+    // ── 高分榜 ──
+    const scores = this._getHighScores();
+    if (scores.length > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(canvas.width / 2 - 180, 650, 360, 24 + scores.length * 28);
+
+      ctx.font = 'bold 14px monospace'; ctx.fillStyle = '#ffcb05';
+      ctx.fillText('🏆 高分榜', canvas.width / 2, 668);
+
+      scores.forEach((s, i) => {
+        ctx.font      = '14px monospace';
+        ctx.fillStyle = i === 0 ? '#ffcb05' : 'rgba(255,255,255,0.65)';
+        ctx.fillText(`${i + 1}. ${s.name.padEnd(8)}  ${String(s.score).padStart(6)}pt  ${s.date}`, canvas.width / 2, 694 + i * 28);
+      });
     }
 
     // 操作說明
-    ctx.fillStyle = 'rgba(255,255,255,0.38)';
-    ctx.font      = '14px monospace';
-    ctx.fillText('← → 移動　↑ / Space 跳（二段跳）　Z / Ctrl 射擊', canvas.width / 2, 700);
-    ctx.fillText('踩在敵人頭上消滅　共 5 關 ＋ BOSS 決戰', canvas.width / 2, 726);
-    ctx.fillText('3 條命　掉落或碰到敵人扣命', canvas.width / 2, 752);
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.font      = '13px monospace';
+    ctx.fillText('← → 移動　↑/Space 跳（二段跳）　Z/Ctrl 射擊', canvas.width / 2, 840);
+    ctx.fillText('踩頭或射擊消滅敵人　3 條命　共 5 關 + BOSS', canvas.width / 2, 860);
   }
 
   _drawGameOver() {
@@ -721,10 +822,25 @@ export class Game {
     ctx.font      = '22px monospace';
     ctx.fillText('⚡ 皮卡丘萬歲！⚡', canvas.width / 2, 444);
 
+    // 高分榜
+    const scores = this._getHighScores();
+    if (scores.length > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(canvas.width / 2 - 200, 474, 400, 24 + scores.length * 30);
+
+      ctx.font = 'bold 15px monospace'; ctx.fillStyle = '#ffcb05';
+      ctx.fillText('🏆 歷史高分榜', canvas.width / 2, 493);
+      scores.forEach((s, i) => {
+        ctx.font      = '15px monospace';
+        ctx.fillStyle = i === 0 ? '#ffcb05' : 'rgba(255,255,255,0.7)';
+        ctx.fillText(`${i + 1}. ${s.name.padEnd(8)}  ${String(s.score).padStart(6)}pt  ${s.date}`, canvas.width / 2, 520 + i * 30);
+      });
+    }
+
     if (Math.sin(t / 420) > 0) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.font      = 'bold 22px monospace';
-      ctx.fillText('按任意鍵回到選單', canvas.width / 2, 564);
+      ctx.fillText('按任意鍵回到選單', canvas.width / 2, 700);
     }
   }
 }
