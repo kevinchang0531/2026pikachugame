@@ -1,0 +1,25 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #1a1a2e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#gameCanvas {
+  display: block;
+  border: 2px solid #ffcb05;
+  background: #000;
+  max-width: calc(100vw - 8px);
+  max-height: calc(100vh - 8px);
+  aspect-ratio: 800 / 900;
+  width: auto;
+  height: auto;
+}
